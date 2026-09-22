@@ -28,4 +28,21 @@ button { cursor: pointer; }
 .dashboard-action span, .dashboard-link span { margin-left: 8px; font-size: 15px; }
 .dashboard-card-stats strong { display: block; color: var(--orange); font: 400 68px Georgia, serif; margin-top: 58px; }
 .dashboard-card-stats p { margin-top: 4px; }
+.posts-section { margin-top: 70px; }
+.posts-heading { display: flex; justify-content: space-between; align-items: end; border-bottom: 1px solid rgba(32,33,42,.1); padding-bottom: 18px; }
+.posts-heading h2 { font: 400 30px Georgia, serif; margin: 9px 0 0; }
+.posts-heading strong { color: var(--orange); font: 400 48px Georgia, serif; }
+.posts-status { color: #858078; font-size: 12px; margin: 20px 0; }
+.posts-list { display: grid; gap: 12px; margin-top: 18px; }
+.post-item { display: flex; justify-content: space-between; gap: 28px; padding: 23px 25px; border: 1px solid rgba(32,33,42,.1); border-radius: 6px; background: rgba(255,254,250,.78); }
+.post-item h3 { font: 400 24px/1.1 Georgia, serif; margin: 9px 0; }
+.post-item p:not(.card-kicker) { max-width: 620px; color: #858078; font-size: 12px; line-height: 1.6; margin: 0; }
+.post-actions { display: flex; align-items: start; gap: 17px; white-space: nowrap; }
+.dashboard-danger { border: 0; padding: 0; background: none; color: #b64e4e; font-size: 11px; font-weight: 700; }
+.post-edit-form { display: grid; flex: 1; gap: 14px; }
+.post-edit-form label { display: grid; gap: 7px; color: #5f6067; font-size: 11px; }
+.post-edit-form input, .post-edit-form textarea { border: 1px solid #dedcd6; border-radius: 4px; outline: 0; background: #fff; color: var(--ink); padding: 10px 12px; font: 12px Arial, sans-serif; }
+.post-edit-form textarea { min-height: 80px; resize: vertical; }
+.post-edit-form input:focus, .post-edit-form textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(242,107,79,.11); }
 @media (max-width: 800px) { .dashboard-header { padding: 23px 7%; }.dashboard-content { padding-top: 65px; }.dashboard-grid { grid-template-columns: 1fr; margin-top: 45px; }.dashboard-card { min-height: 210px; } }
+@media (max-width: 600px) { .post-item { display: block; }.post-actions { margin-top: 18px; }.posts-heading h2 { font-size: 25px; } }
