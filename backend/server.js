@@ -133,6 +133,25 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
+app.post('/api/users/:username/connections', async (req, res) => {
+  try {
+    const { targetUsername } = req.body;
+    const user = await findUser(req.params.username);
+    const targetUser = targetUsername ? await findUser(targetUsername) : null;
+    if (!user || !targetUser) return res.status(404).json({ message: 'Both users must exist.' });
+    if (user.id === targetUser.id) return res.status(400).json({ message: 'You cannot connect with yourself.' });
+
+    await Promise.all([
+      User.updateOne({ _id: user._id }, { $addToSet: { connections: targetUser._id } }),
+      User.updateOne({ _id: targetUser._id }, { $addToSet: { connections: user._id } }),
+    ]);
+    return res.status(201).json({ message: 'Connection created.' });
+  } catch (error) {
+    console.error('Connection creation failed:', error.message);
+    return res.status(500).json({ message: 'Unable to create the connection right now.' });
+  }
+});
+
 // Example route
 app.get('/', (req, res) => {
   res.send('Backend is running...');
