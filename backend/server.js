@@ -28,6 +28,11 @@ const verifyPassword = (password, storedPassword) => {
 
 const normalizeUsername = (username) => username.trim().toLowerCase();
 const jwtSecret = process.env.JWT_SECRET || 'skilllink-development-secret';
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `http://localhost:${process.env.PORT || 5000}/api/auth/google/callback`;
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const oauthStates = new Map();
 
 const findUser = (username) => User.findOne({ username: normalizeUsername(username) });
 
@@ -42,6 +47,53 @@ const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: 'The access token is invalid or expired.' });
   }
 };
+
+const redirectWithOAuthResult = (res, values) => {
+  const redirectUrl = new URL(clientUrl);
+  Object.entries(values).forEach(([key, value]) => redirectUrl.searchParams.set(key, value));
+  return res.redirect(redirectUrl.toString());
+};
+
+app.get('/api/auth/google', (req, res) => {
+  if (!googleClientId || !googleClientSecret) return res.status(503).json({ message: 'Google authentication is not configured.' });
+  const state = crypto.randomBytes(24).toString('hex');
+  oauthStates.set(state, Date.now() + 10 * 60 * 1000);
+  const googleUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  googleUrl.search = new URLSearchParams({ client_id: googleClientId, redirect_uri: googleRedirectUri, response_type: 'code', scope: 'openid email profile', state, prompt: 'select_account' });
+  return res.redirect(googleUrl.toString());
+});
+
+app.get('/api/auth/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  if (error) return redirectWithOAuthResult(res, { oauth: 'error', message: 'Google sign-in was cancelled.' });
+  if (!code || !state || !oauthStates.has(state) || oauthStates.get(state) < Date.now()) {
+    oauthStates.delete(state);
+    return redirectWithOAuthResult(res, { oauth: 'error', message: 'The Google sign-in session expired.' });
+  }
+  oauthStates.delete(state);
+
+  try {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ code, client_id: googleClientId, client_secret: googleClientSecret, redirect_uri: googleRedirectUri, grant_type: 'authorization_code' })
+    });
+    const tokenResult = await tokenResponse.json();
+    if (!tokenResponse.ok) throw new Error(tokenResult.error_description || 'Google token exchange failed.');
+    const profileResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: { Authorization: `Bearer ${tokenResult.access_token}` } });
+    const profile = await profileResponse.json();
+    if (!profileResponse.ok || !profile.email_verified || !profile.email) throw new Error('Google did not return a verified email address.');
+
+    const email = profile.email.toLowerCase();
+    let user = await User.findOne({ email });
+    if (!user) user = await User.create({ username: email, email, password: hashPassword(crypto.randomBytes(32).toString('hex')), bio: profile.name || '' });
+    const token = jwt.sign({ sub: user._id.toString(), username: user.username }, jwtSecret, { expiresIn: '1h' });
+    return redirectWithOAuthResult(res, { oauth: 'success', token, username: user.username });
+  } catch (oauthError) {
+    console.error('Google authentication failed:', oauthError.message);
+    return redirectWithOAuthResult(res, { oauth: 'error', message: 'Google sign-in could not be completed.' });
+  }
+});
 
 app.post('/api/auth/signup', async (req, res) => {
   try {

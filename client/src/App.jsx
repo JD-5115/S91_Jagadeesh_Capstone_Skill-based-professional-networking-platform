@@ -1,13 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import Dashboard from './components/Dashboard.jsx'
 
 function App() {
+  const oauthParams = new URLSearchParams(window.location.search)
+  const oauth = oauthParams.get('oauth')
+  const oauthUsername = oauthParams.get('username')
+  const oauthToken = oauthParams.get('token')
   const [mode, setMode] = useState('login')
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('skilllink-session') && localStorage.getItem('skilllink-token')))
-  const [username, setUsername] = useState(() => localStorage.getItem('skilllink-session') || '')
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean((localStorage.getItem('skilllink-session') && localStorage.getItem('skilllink-token')) || (oauthUsername && oauthToken)))
+  const [username, setUsername] = useState(() => oauthUsername || localStorage.getItem('skilllink-session') || '')
+
+  useEffect(() => {
+    const googleButton = document.querySelector('.google-button')
+    const startGoogleLogin = () => { window.location.href = 'http://localhost:5000/api/auth/google' }
+    googleButton?.addEventListener('click', startGoogleLogin)
+    if (oauth === 'success' && oauthToken && oauthUsername) {
+      localStorage.setItem('skilllink-session', oauthUsername)
+      localStorage.setItem('skilllink-token', oauthToken)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (oauth === 'error') {
+      window.alert(new URLSearchParams(window.location.search).get('message') || 'Google sign-in failed.')
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+    return () => googleButton?.removeEventListener('click', startGoogleLogin)
+  }, [oauth, oauthToken, oauthUsername])
 
   const isSignup = mode === 'signup'
 
