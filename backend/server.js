@@ -1,0 +1,143 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const crypto = require('crypto');
+const User = require('./models/User');
+const Post = require('./models/Post');
+
+require('dotenv').config({ path: path.join(__dirname, 'atlas-credentials.env') });
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const hashPassword = (password) => {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+};
+
+const verifyPassword = (password, storedPassword) => {
+  const [salt, storedHash] = storedPassword.split(':');
+  if (!salt || !storedHash) return false;
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(storedHash, 'hex'));
+};
+
+const normalizeUsername = (username) => username.trim().toLowerCase();
+
+const findUser = (username) => User.findOne({ username: normalizeUsername(username) });
+
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, username, password } = req.body;
+    if (!name?.trim() || !username?.trim() || !password || password.length < 6) {
+      return res.status(400).json({ message: 'Name, username, and a password of at least 6 characters are required.' });
+    }
+
+    const normalizedUsername = normalizeUsername(username);
+    if (await User.findOne({ username: normalizedUsername })) {
+      return res.status(409).json({ message: 'That username is already registered. Please choose another.' });
+    }
+
+    await User.create({
+      username: normalizedUsername,
+      email: normalizedUsername,
+      password: hashPassword(password),
+      bio: name.trim(),
+    });
+    return res.status(201).json({ message: 'Account created. You can now log in.' });
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ message: 'That username is already registered. Please choose another.' });
+    console.error('Signup failed:', error.message);
+    return res.status(500).json({ message: 'Unable to create the account right now.' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username?.trim() || !password) return res.status(400).json({ message: 'Username and password are required.' });
+    const user = await findUser(username);
+    if (!user || !verifyPassword(password, user.password)) return res.status(401).json({ message: 'Invalid username or password.' });
+    return res.json({ username: user.username, bio: user.bio, skills: user.skills });
+  } catch (error) {
+    console.error('Login failed:', error.message);
+    return res.status(500).json({ message: 'Unable to log in right now.' });
+  }
+});
+
+app.get('/api/users/:username', async (req, res) => {
+  try {
+    const user = await findUser(req.params.username).select('-password -email');
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    return res.json(user);
+  } catch (error) {
+    console.error('Profile lookup failed:', error.message);
+    return res.status(500).json({ message: 'Unable to load the profile right now.' });
+  }
+});
+
+app.put('/api/users/:username', async (req, res) => {
+  try {
+    const updates = {};
+    if (typeof req.body.bio === 'string') updates.bio = req.body.bio.trim();
+    if (Array.isArray(req.body.skills)) updates.skills = req.body.skills.filter((skill) => typeof skill === 'string' && skill.trim()).map((skill) => skill.trim());
+    const user = await findUser(req.params.username);
+    if (!user) return res.status(404).json({ message: 'User not found.' });
+    Object.assign(user, updates);
+    await user.save();
+    return res.json({ username: user.username, bio: user.bio, skills: user.skills });
+  } catch (error) {
+    console.error('Profile update failed:', error.message);
+    return res.status(500).json({ message: 'Unable to update the profile right now.' });
+  }
+});
+
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await Post.find().populate('author', 'username bio').sort({ createdAt: -1 });
+    return res.json(posts);
+  } catch (error) {
+    console.error('Post lookup failed:', error.message);
+    return res.status(500).json({ message: 'Unable to load posts right now.' });
+  }
+});
+
+app.post('/api/posts', async (req, res) => {
+  try {
+    const { title, description, username } = req.body;
+    if (!title?.trim() || !description?.trim() || !username?.trim()) {
+      return res.status(400).json({ message: 'Title, description, and username are required.' });
+    }
+    const author = await findUser(username);
+    if (!author) return res.status(404).json({ message: 'Author not found.' });
+    const post = await Post.create({ title: title.trim(), description: description.trim(), author: author._id });
+    return res.status(201).json(await post.populate('author', 'username bio'));
+  } catch (error) {
+    console.error('Post creation failed:', error.message);
+    return res.status(500).json({ message: 'Unable to create the post right now.' });
+  }
+});
+
+// Example route
+app.get('/', (req, res) => {
+  res.send('Backend is running...');
+});
+
+const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  if (!mongoUri) throw new Error('MONGO_URI or MONGODB_URI is not configured.');
+  await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
+  console.log('MongoDB connected');
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+};
+
+startServer().catch((error) => {
+  console.error('Server startup failed:', error.message);
+  process.exit(1);
+});
