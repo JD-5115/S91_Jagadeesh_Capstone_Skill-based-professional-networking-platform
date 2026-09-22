@@ -68,6 +68,18 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await User.find({}, 'username bio skills connections createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    return res.json(users);
+  } catch (error) {
+    console.error('Users lookup failed:', error.message);
+    return res.status(500).json({ message: 'Unable to load users right now.' });
+  }
+});
+
 app.get('/api/users/:username', async (req, res) => {
   try {
     const user = await findUser(req.params.username).select('-password -email');
