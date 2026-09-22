@@ -8,6 +8,12 @@ const userSchema = new mongoose.Schema({
   skills: [{ type: String }], // Array of skills
   connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Networking relationships
   createdAt: { type: Date, default: Date.now }
+}, { toJSON: { virtuals: true }, toObject: { virtuals: true } });
+
+userSchema.virtual('posts', {
+  ref: 'Post',
+  localField: '_id',
+  foreignField: 'author'
 });
 
 module.exports = mongoose.model('User', userSchema);

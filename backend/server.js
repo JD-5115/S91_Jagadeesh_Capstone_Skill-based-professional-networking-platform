@@ -82,7 +82,10 @@ app.get('/api/users', async (req, res) => {
 
 app.get('/api/users/:username', async (req, res) => {
   try {
-    const user = await findUser(req.params.username).select('-password -email');
+    const user = await findUser(req.params.username)
+      .select('-password -email')
+      .populate('connections', 'username bio skills')
+      .populate('posts', 'title description createdAt');
     if (!user) return res.status(404).json({ message: 'User not found.' });
     return res.json(user);
   } catch (error) {
