@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const User = require('./models/User');
 const Post = require('./models/Post');
 
@@ -26,8 +27,21 @@ const verifyPassword = (password, storedPassword) => {
 };
 
 const normalizeUsername = (username) => username.trim().toLowerCase();
+const jwtSecret = process.env.JWT_SECRET || 'skilllink-development-secret';
 
 const findUser = (username) => User.findOne({ username: normalizeUsername(username) });
+
+const requireAuth = (req, res, next) => {
+  const authorization = req.headers.authorization || '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  if (!token) return res.status(401).json({ message: 'A valid access token is required.' });
+  try {
+    req.auth = jwt.verify(token, jwtSecret);
+    return next();
+  } catch {
+    return res.status(401).json({ message: 'The access token is invalid or expired.' });
+  }
+};
 
 app.post('/api/auth/signup', async (req, res) => {
   try {
@@ -61,7 +75,8 @@ app.post('/api/auth/login', async (req, res) => {
     if (!username?.trim() || !password) return res.status(400).json({ message: 'Username and password are required.' });
     const user = await findUser(username);
     if (!user || !verifyPassword(password, user.password)) return res.status(401).json({ message: 'Invalid username or password.' });
-    return res.json({ username: user.username, bio: user.bio, skills: user.skills });
+    const token = jwt.sign({ sub: user._id.toString(), username: user.username }, jwtSecret, { expiresIn: '1h' });
+    return res.json({ token, username: user.username, bio: user.bio, skills: user.skills });
   } catch (error) {
     console.error('Login failed:', error.message);
     return res.status(500).json({ message: 'Unable to log in right now.' });
@@ -94,8 +109,9 @@ app.get('/api/users/:username', async (req, res) => {
   }
 });
 
-app.put('/api/users/:username', async (req, res) => {
+app.put('/api/users/:username', requireAuth, async (req, res) => {
   try {
+    if (req.auth.username !== normalizeUsername(req.params.username)) return res.status(403).json({ message: 'You can only update your own profile.' });
     const updates = {};
     if (typeof req.body.bio === 'string') updates.bio = req.body.bio.trim();
     if (Array.isArray(req.body.skills)) updates.skills = req.body.skills.filter((skill) => typeof skill === 'string' && skill.trim()).map((skill) => skill.trim());
@@ -120,7 +136,7 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
-app.post('/api/posts', async (req, res) => {
+app.post('/api/posts', requireAuth, async (req, res) => {
   try {
     const { title, description, username } = req.body;
     if (!title?.trim() || !description?.trim() || !username?.trim()) {
@@ -128,6 +144,7 @@ app.post('/api/posts', async (req, res) => {
     }
     const author = await findUser(username);
     if (!author) return res.status(404).json({ message: 'Author not found.' });
+    if (req.auth.sub !== author._id.toString()) return res.status(403).json({ message: 'You can only create posts as yourself.' });
     const post = await Post.create({ title: title.trim(), description: description.trim(), author: author._id });
     return res.status(201).json(await post.populate('author', 'username bio'));
   } catch (error) {
@@ -136,16 +153,18 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
-app.put('/api/posts/:id', async (req, res) => {
+app.put('/api/posts/:id', requireAuth, async (req, res) => {
   try {
     const updates = {};
     if (typeof req.body.title === 'string' && req.body.title.trim()) updates.title = req.body.title.trim();
     if (typeof req.body.description === 'string' && req.body.description.trim()) updates.description = req.body.description.trim();
     if (!Object.keys(updates).length) return res.status(400).json({ message: 'A title or description is required.' });
 
+    const existingPost = await Post.findById(req.params.id);
+    if (!existingPost) return res.status(404).json({ message: 'Post not found.' });
+    if (req.auth.sub !== existingPost.author.toString()) return res.status(403).json({ message: 'You can only update your own posts.' });
     const post = await Post.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
       .populate('author', 'username bio');
-    if (!post) return res.status(404).json({ message: 'Post not found.' });
     return res.json(post);
   } catch (error) {
     console.error('Post update failed:', error.message);
@@ -153,10 +172,12 @@ app.put('/api/posts/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/posts/:id', async (req, res) => {
+app.delete('/api/posts/:id', requireAuth, async (req, res) => {
   try {
+    const existingPost = await Post.findById(req.params.id);
+    if (!existingPost) return res.status(404).json({ message: 'Post not found.' });
+    if (req.auth.sub !== existingPost.author.toString()) return res.status(403).json({ message: 'You can only delete your own posts.' });
     const post = await Post.findByIdAndDelete(req.params.id);
-    if (!post) return res.status(404).json({ message: 'Post not found.' });
     return res.status(204).send();
   } catch (error) {
     console.error('Post deletion failed:', error.message);
@@ -164,9 +185,10 @@ app.delete('/api/posts/:id', async (req, res) => {
   }
 });
 
-app.post('/api/users/:username/connections', async (req, res) => {
+app.post('/api/users/:username/connections', requireAuth, async (req, res) => {
   try {
     const { targetUsername } = req.body;
+    if (req.auth.username !== normalizeUsername(req.params.username)) return res.status(403).json({ message: 'You can only manage your own connections.' });
     const user = await findUser(req.params.username);
     const targetUser = targetUsername ? await findUser(targetUsername) : null;
     if (!user || !targetUser) return res.status(404).json({ message: 'Both users must exist.' });
