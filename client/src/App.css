@@ -35,6 +35,17 @@ button { cursor: pointer; }
 .posts-status { color: #858078; font-size: 12px; margin: 20px 0; }
 .posts-list { display: grid; gap: 12px; margin-top: 18px; }
 .post-item { display: flex; justify-content: space-between; gap: 28px; padding: 23px 25px; border: 1px solid rgba(32,33,42,.1); border-radius: 6px; background: rgba(255,254,250,.78); }
+.post-composer { display: grid; gap: 14px; margin-top: 25px; padding: 23px 25px; border: 1px solid rgba(32,33,42,.1); border-radius: 6px; background: rgba(255,254,250,.78); }
+.composer-heading h3 { font: 400 24px Georgia, serif; margin: 8px 0 3px; }
+.post-composer label { display: grid; gap: 7px; color: #5f6067; font-size: 11px; }
+.post-composer input:not([type=file]), .post-composer textarea { border: 1px solid #dedcd6; border-radius: 4px; outline: 0; background: #fff; color: var(--ink); padding: 10px 12px; font: 12px Arial, sans-serif; }
+.post-composer textarea { min-height: 72px; resize: vertical; }
+.composer-footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.file-picker { border: 1px solid #d8d2c9; border-radius: 4px; padding: 9px 12px; color: var(--ink) !important; cursor: pointer; }
+.file-picker input { display: none; }
+.composer-footer > span { color: #858078; font-size: 11px; flex: 1; }
+.post-attachment { display: block; margin-top: 15px; color: var(--orange); font-size: 11px; text-decoration: none; }
+.post-attachment span { color: #858078; margin-left: 6px; }
 .post-item h3 { font: 400 24px/1.1 Georgia, serif; margin: 9px 0; }
 .post-item p:not(.card-kicker) { max-width: 620px; color: #858078; font-size: 12px; line-height: 1.6; margin: 0; }
 .post-actions { display: flex; align-items: start; gap: 17px; white-space: nowrap; }

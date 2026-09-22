@@ -1,3 +1,9 @@
+## Mock UI/UX Design
+
+Figma link:- https://www.figma.com/design/Ygynq84IQaNUUMUJ5I79Ss/Untitled?node-id=0-1&t=Bk9xmowyS5lQPngM-1
+
+This is the mock design for the SkillLink Website, which would be implemented later in the frontend work.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

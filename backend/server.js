@@ -2,8 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const User = require('./models/User');
 const Post = require('./models/Post');
 
@@ -12,6 +14,25 @@ require('dotenv').config({ path: path.join(__dirname, 'atlas-credentials.env') }
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const uploadsDirectory = path.join(__dirname, 'uploads');
+fs.mkdirSync(uploadsDirectory, { recursive: true });
+app.use('/uploads', express.static(uploadsDirectory));
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: uploadsDirectory,
+    filename: (req, file, callback) => {
+      const extension = path.extname(file.originalname).toLowerCase();
+      callback(null, `${crypto.randomUUID()}${extension}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, callback) => {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain'];
+    callback(null, allowedTypes.includes(file.mimetype));
+  },
+});
 
 const hashPassword = (password) => {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -188,7 +209,7 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
-app.post('/api/posts', requireAuth, async (req, res) => {
+app.post('/api/posts', requireAuth, upload.single('file'), async (req, res) => {
   try {
     const { title, description, username } = req.body;
     if (!title?.trim() || !description?.trim() || !username?.trim()) {
@@ -197,9 +218,16 @@ app.post('/api/posts', requireAuth, async (req, res) => {
     const author = await findUser(username);
     if (!author) return res.status(404).json({ message: 'Author not found.' });
     if (req.auth.sub !== author._id.toString()) return res.status(403).json({ message: 'You can only create posts as yourself.' });
-    const post = await Post.create({ title: title.trim(), description: description.trim(), author: author._id });
+    const attachment = req.file ? {
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      url: `/uploads/${req.file.filename}`,
+    } : undefined;
+    const post = await Post.create({ title: title.trim(), description: description.trim(), author: author._id, attachment });
     return res.status(201).json(await post.populate('author', 'username bio'));
   } catch (error) {
+    if (req.file) fs.unlink(req.file.path, () => {});
     console.error('Post creation failed:', error.message);
     return res.status(500).json({ message: 'Unable to create the post right now.' });
   }
