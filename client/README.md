@@ -1,8 +1,12 @@
-## Mock UI/UX Design
+# SkillLink
 
-Figma link:- https://www.figma.com/design/Ygynq84IQaNUUMUJ5I79Ss/Untitled?node-id=0-1&t=Bk9xmowyS5lQPngM-1
+## Mock UX Design
 
-This is the mock design for the SkillLink Website, which would be implemented later in the frontend work.
+Figma Link:
+https://www.figma.com/design/Ygynq84IQaNUUMUJ5I79Ss/Untitled?node-id=0-1&t=Bk9xmowyS5lQPngM-1
+
+This mock UX demonstrates SkillLink's primary authentication and dashboard screens,
+navigation flow, post sharing journey, and connection-focused user experience.
 
 # React + Vite
 
