@@ -150,6 +150,17 @@ app.put('/api/posts/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found.' });
+    return res.status(204).send();
+  } catch (error) {
+    console.error('Post deletion failed:', error.message);
+    return res.status(500).json({ message: 'Unable to delete the post right now.' });
+  }
+});
+
 app.post('/api/users/:username/connections', async (req, res) => {
   try {
     const { targetUsername } = req.body;
