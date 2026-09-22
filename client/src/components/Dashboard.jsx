@@ -9,7 +9,7 @@ const fetchPosts = async () => {
 	return result
 }
 
-function Dashboard({ username, onLogout }) {
+function Dashboard({ username, token, onLogout }) {
 	const [posts, setPosts] = useState([])
 	const [editingPostId, setEditingPostId] = useState(null)
 	const [editForm, setEditForm] = useState({ title: '', description: '' })
@@ -38,7 +38,7 @@ function Dashboard({ username, onLogout }) {
 		try {
 			const response = await fetch(`${API_URL}/posts/${editingPostId}`, {
 				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 				body: JSON.stringify(editForm),
 			})
 			const result = await response.json()
@@ -54,7 +54,7 @@ function Dashboard({ username, onLogout }) {
 	const deletePost = async (postId) => {
 		if (!window.confirm('Delete this post?')) return
 		try {
-			const response = await fetch(`${API_URL}/posts/${postId}`, { method: 'DELETE' })
+						const response = await fetch(`${API_URL}/posts/${postId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
 			if (!response.ok) {
 				const result = await response.json()
 				throw new Error(result.message || 'Unable to delete post.')

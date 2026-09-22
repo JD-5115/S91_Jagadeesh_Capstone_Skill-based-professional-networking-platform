@@ -6,7 +6,7 @@ function App() {
   const [mode, setMode] = useState('login')
   const [showPassword, setShowPassword] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('skilllink-session')))
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('skilllink-session') && localStorage.getItem('skilllink-token')))
   const [username, setUsername] = useState(() => localStorage.getItem('skilllink-session') || '')
 
   const isSignup = mode === 'signup'
@@ -34,6 +34,7 @@ function App() {
         setUsername(result.username)
         setIsAuthenticated(true)
         localStorage.setItem('skilllink-session', result.username)
+        localStorage.setItem('skilllink-token', result.token)
       }
     } catch (error) {
       window.alert(error.message === 'Failed to fetch' ? 'The server is unavailable. Start the backend and try again.' : error.message)
@@ -47,12 +48,13 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('skilllink-session')
+    localStorage.removeItem('skilllink-token')
     setUsername('')
     setIsAuthenticated(false)
   }
 
   if (isAuthenticated) {
-    return <Dashboard username={username} onLogout={handleLogout} />
+    return <Dashboard username={username} token={localStorage.getItem('skilllink-token')} onLogout={handleLogout} />
   }
 
   return (
