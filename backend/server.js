@@ -133,6 +133,23 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
+app.put('/api/posts/:id', async (req, res) => {
+  try {
+    const updates = {};
+    if (typeof req.body.title === 'string' && req.body.title.trim()) updates.title = req.body.title.trim();
+    if (typeof req.body.description === 'string' && req.body.description.trim()) updates.description = req.body.description.trim();
+    if (!Object.keys(updates).length) return res.status(400).json({ message: 'A title or description is required.' });
+
+    const post = await Post.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true })
+      .populate('author', 'username bio');
+    if (!post) return res.status(404).json({ message: 'Post not found.' });
+    return res.json(post);
+  } catch (error) {
+    console.error('Post update failed:', error.message);
+    return res.status(500).json({ message: 'Unable to update the post right now.' });
+  }
+});
+
 app.post('/api/users/:username/connections', async (req, res) => {
   try {
     const { targetUsername } = req.body;
