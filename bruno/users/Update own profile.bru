@@ -1,0 +1,24 @@
+meta {
+  name: Update own profile
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/users/{{username}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  bio: Building a professional network around shared skills.
+  skills: [ JavaScript, Product Design, Research ]
+}
+
+docs {
+  Updates the authenticated user's own bio and/or skills. The username in the URL must match the JWT identity.
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Google OAuth callback
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/auth/google/callback?code=replace-with-code&state=replace-with-state
+  body: none
+  auth: none
+}
+
+docs {
+  Google calls this callback with a valid code and state after the OAuth start request. A manually supplied state will expire or be rejected.
+}

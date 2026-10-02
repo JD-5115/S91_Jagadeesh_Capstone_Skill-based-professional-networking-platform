@@ -1,0 +1,15 @@
+meta {
+  name: Google OAuth start
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/auth/google
+  body: none
+  auth: none
+}
+
+docs {
+  Starts Google OAuth and redirects to Google. Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in the backend environment.
+}
