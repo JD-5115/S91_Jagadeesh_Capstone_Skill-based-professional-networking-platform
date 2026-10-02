@@ -24,8 +24,8 @@ Authenticated requests use `Authorization: Bearer <JWT>`. Sign in with the login
 
 ## Expected success statuses
 
-- Account signup and post creation: `201`
-- Login, reads, updates, and connection creation: `200` (connection creation returns `201`)
+- Account signup, post creation, and connection creation: `201`
+- Login, reads, and updates: `200`
 - Post deletion: `204`
 - Invalid or missing authentication: `401`; ownership failures: `403`; missing records: `404`; invalid input: `400`.
 
