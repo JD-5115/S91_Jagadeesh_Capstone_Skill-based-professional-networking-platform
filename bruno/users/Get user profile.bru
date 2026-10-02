@@ -1,0 +1,15 @@
+meta {
+  name: Get user profile
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/users/{{username}}
+  body: none
+  auth: none
+}
+
+docs {
+  Returns a public profile with populated connections and post summaries. Password and email are excluded.
+}

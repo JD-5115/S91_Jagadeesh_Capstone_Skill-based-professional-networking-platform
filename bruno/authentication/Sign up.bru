@@ -1,0 +1,21 @@
+meta {
+  name: Sign up
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/signup
+  body: json
+  auth: none
+}
+
+body:json {
+  name: Demo User
+  username: {{username}}
+  password: {{password}}
+}
+
+docs {
+  Creates an account. Password must contain at least six characters. Returns 201 when created.
+}
