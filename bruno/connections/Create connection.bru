@@ -1,0 +1,23 @@
+meta {
+  name: Create connection
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/users/{{username}}/connections
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  targetUsername: {{targetUsername}}
+}
+
+docs {
+  Creates a reciprocal connection between the authenticated user and targetUsername. The username in the URL must match the JWT identity.
+}

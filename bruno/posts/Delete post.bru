@@ -1,0 +1,19 @@
+meta {
+  name: Delete post
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/posts/{{postId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Deletes a post owned by the authenticated user. Returns 204 with no response body.
+}
