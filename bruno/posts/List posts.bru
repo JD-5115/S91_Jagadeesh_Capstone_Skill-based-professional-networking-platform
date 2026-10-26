@@ -1,0 +1,15 @@
+meta {
+  name: List posts
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/posts
+  body: none
+  auth: none
+}
+
+docs {
+  Returns posts newest first, with author username and bio populated.
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Create post
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/posts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  title: Looking for a frontend collaborator
+  description: I am building a skills-based professional network and would love to connect.
+  username: {{username}}
+}
+
+docs {
+  Creates a post for the authenticated user. To attach a file, change the request body to multipart form data and include title, description, username, and an optional file field. Accepted files are PDF, JPEG, PNG, WebP, or plain text up to 10 MB.
+}

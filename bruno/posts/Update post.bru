@@ -1,0 +1,24 @@
+meta {
+  name: Update post
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/posts/{{postId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  title: Updated collaboration request
+  description: Updated post details.
+}
+
+docs {
+  Updates the title and/or description of a post owned by the authenticated user.
+}
