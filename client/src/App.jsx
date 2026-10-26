@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import Dashboard from './components/Dashboard.jsx'
+import { API_URL } from './api.js'
 
 function App() {
   const oauthParams = new URLSearchParams(window.location.search)
@@ -15,7 +16,7 @@ function App() {
 
   useEffect(() => {
     const googleButton = document.querySelector('.google-button')
-    const startGoogleLogin = () => { window.location.href = 'http://localhost:5000/api/auth/google' }
+    const startGoogleLogin = () => { window.location.href = `${API_URL}/auth/google` }
     googleButton?.addEventListener('click', startGoogleLogin)
     if (oauth === 'success' && oauthToken && oauthUsername) {
       localStorage.setItem('skilllink-session', oauthUsername)
@@ -34,7 +35,7 @@ function App() {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/${isSignup ? 'signup' : 'login'}`, {
+      const response = await fetch(`${API_URL}/auth/${isSignup ? 'signup' : 'login'}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

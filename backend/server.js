@@ -295,6 +295,9 @@ const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
+  if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+    throw new Error('JWT_SECRET must be set to a value of at least 32 characters in production.');
+  }
   if (!mongoUri) throw new Error('MONGO_URI or MONGODB_URI is not configured.');
   await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 10000 });
   console.log('MongoDB connected');

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-
-const API_URL = 'http://localhost:5000/api'
+import { API_BASE_URL, API_URL } from '../api.js'
 
 const fetchPosts = async () => {
 	const response = await fetch(`${API_URL}/posts`)
@@ -119,7 +118,7 @@ function Dashboard({ username, token, onLogout }) {
 									<label>Description<textarea value={editForm.description} onChange={(event) => setEditForm({ ...editForm, description: event.target.value })} required /></label>
 									<div className="post-actions"><button type="submit" className="dashboard-action">Save changes</button><button type="button" className="dashboard-link" onClick={() => setEditingPostId(null)}>Cancel</button></div>
 								</form> : <><div><p className="card-kicker">{post.author?.username || 'SKILLLink MEMBER'}</p><h3>{post.title}</h3><p>{post.description}</p></div>{isOwner && <div className="post-actions"><button type="button" className="dashboard-link" onClick={() => startEditing(post)}>Edit</button><button type="button" className="dashboard-danger" onClick={() => deletePost(post._id)}>Delete</button></div>}</>}
-								{post.attachment && <a className="post-attachment" href={`http://localhost:5000${post.attachment.url}`} target="_blank" rel="noreferrer">{post.attachment.originalName} <span>{Math.ceil(post.attachment.size / 1024)} KB</span></a>}</article>
+								{post.attachment && <a className="post-attachment" href={`${API_BASE_URL}${post.attachment.url}`} target="_blank" rel="noreferrer">{post.attachment.originalName} <span>{Math.ceil(post.attachment.size / 1024)} KB</span></a>}</article>
 						})}
 					</div>
 				</section>
