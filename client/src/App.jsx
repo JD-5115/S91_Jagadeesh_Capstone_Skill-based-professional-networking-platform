@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import Dashboard from './components/Dashboard.jsx'
+import Discover from './components/Discover.jsx'
 import { API_URL } from './api.js'
 
 function App() {
@@ -13,6 +14,13 @@ function App() {
   const [submitted, setSubmitted] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean((localStorage.getItem('skilllink-session') && localStorage.getItem('skilllink-token')) || (oauthUsername && oauthToken)))
   const [username, setUsername] = useState(() => oauthUsername || localStorage.getItem('skilllink-session') || '')
+  const [page, setPage] = useState(() => window.location.hash === '#/discover' ? 'discover' : 'dashboard')
+
+  useEffect(() => {
+    const updatePage = () => setPage(window.location.hash === '#/discover' ? 'discover' : 'dashboard')
+    window.addEventListener('hashchange', updatePage)
+    return () => window.removeEventListener('hashchange', updatePage)
+  }, [])
 
   useEffect(() => {
     const googleButton = document.querySelector('.google-button')
@@ -71,10 +79,13 @@ function App() {
     localStorage.removeItem('skilllink-token')
     setUsername('')
     setIsAuthenticated(false)
+    window.history.replaceState({}, document.title, window.location.pathname)
+    setPage('dashboard')
   }
 
   if (isAuthenticated) {
-    return <Dashboard username={username} token={localStorage.getItem('skilllink-token')} onLogout={handleLogout} />
+    const pageProps = { username, token: localStorage.getItem('skilllink-token'), onLogout: handleLogout }
+    return page === 'discover' ? <Discover {...pageProps} /> : <Dashboard {...pageProps} />
   }
 
   return (
